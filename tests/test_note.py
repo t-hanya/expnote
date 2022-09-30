@@ -1,4 +1,7 @@
+from PIL import Image
+
 from expnote.note import Table
+from expnote.note import Figure
 
 
 class TestNote:
@@ -16,3 +19,12 @@ class TestNote:
         assert table.rows[2] == [3, 30, 300]
 
         assert len(str(table).splitlines()) == 5
+
+
+class TestFigure:
+
+    def test(self):
+        fig = Figure(
+            image=Image.new('RGB', (100, 50))
+        )
+        assert fig.image.size == (100, 50)

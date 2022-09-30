@@ -7,6 +7,8 @@ from dataclasses import dataclass
 from typing import List
 from typing import Any
 
+from PIL import Image
+
 
 @dataclass
 class Table:
@@ -28,3 +30,9 @@ class Table:
             lines.append(' ' + ' | '.join([str(v).ljust(w) for v, w
                                            in zip(row, width_arr)]))
         return '\n'.join(lines)
+
+
+@dataclass
+class Figure:
+    """A figure data."""
+    image: Image.Image

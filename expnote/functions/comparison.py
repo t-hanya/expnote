@@ -4,6 +4,7 @@ Implement functions to compare runs.
 
 
 import copy
+from functools import reduce
 from typing import Any
 from typing import List
 from typing import Optional
@@ -12,6 +13,27 @@ from typing import Tuple
 from expnote.run import Run
 from expnote.run import RunGroup
 from expnote.note import Table
+
+
+DEFAULT_STEP_KEYS = ('epoch', 'epochs',
+                     'step', 'steps',
+                     'iteration', 'iterations', 'iter')
+
+
+def _determine_step_key(step_metrics_list: List[List[dict]]
+                       ) -> Optional[str]:
+    """Determine appropriate step name from step metrics data."""
+
+    keyset_list = [set(sm[0].keys()) for sm in step_metrics_list]
+    common_keys = reduce(lambda s1, s2: s1 & s2, keyset_list)
+
+    # find an available step key
+    for step_key_candidate in DEFAULT_STEP_KEYS:
+        if step_key_candidate in common_keys:
+            return step_key_candidate
+
+    # index in step_metrics (this is a list) will be used
+    return None
 
 
 def make_run_groups(runs: List[Run]) -> List[RunGroup]:
@@ -40,16 +62,48 @@ def make_run_groups(runs: List[Run]) -> List[RunGroup]:
                 metric_values[key].append(value)
         averaged_metrics = {}
         for key, values in metric_values.items():
+            if len(values) < len(group):
+                continue
             if len(values) > 1:
                 averaged_metrics[key] = sum(values) / len(values)
             else:
                 averaged_metrics[key] = values[0]
 
+        # compute averaged step metrics
+        step_metrics_list = [run.step_metrics for run in group
+                             if run.step_metrics is not None]
+        if step_metrics_list:
+            step_key = _determine_step_key(step_metrics_list)
+            key_sets = [set(sm[0].keys()) for sm in step_metrics_list]
+            step_metrics_keys = reduce(lambda s1, s2: s1 & s2, key_sets)
+            steps = {}
+            for step_metrics in step_metrics_list:
+                for data in step_metrics:
+                    step = data[step_key]
+                    if not step in steps:
+                        steps[step] = {}
+                    for key, value in data.items():
+                        if not key in steps[step]:
+                            steps[step][key] = []
+                        steps[step][key].append(value)
+
+            averaged_step_metrics = []
+            for step, data in sorted(steps.items()):
+                averaged_step_metrics.append({step_key: step})
+                for key, values in data.items():
+                    if len(values) > 1:
+                        averaged_step_metrics[-1][key] = sum(values) / len(values)
+                    else:
+                        averaged_step_metrics[-1][key] = values[0]
+        else:
+            averaged_step_metrics = None
+
         ret.append(RunGroup(
             runs=group,
             id=tuple(run.id for run in group),
             params=copy.deepcopy(group[0].params),
-            metrics=averaged_metrics
+            metrics=averaged_metrics,
+            step_metrics=averaged_step_metrics,
         ))
 
     return ret

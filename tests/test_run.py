@@ -10,6 +10,18 @@ class TestRun:
         assert run.params == {'lr': 0.5}
         assert run.metrics == {'acc': 0.9}
 
+    def test_full(self):
+        run = Run(
+            id='0',
+            params={'lr': 0.5},
+            metrics={'acc': 0.9},
+            step_metrics=[{'epoch': 0, 'loss': 1.}],
+            info={'start_time': '2022-10-09 12:00:00.000000',
+                  'end_time': '2022-10-09 13:00:00.000000',
+                  'status': 'complete',
+                 }
+        )
+
 
 class TestRunGroup:
 

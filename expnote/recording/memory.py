@@ -37,6 +37,7 @@ class Memory:
         self.params = {}
         self.metrics = {}
         self.step_metrics = None
+        self.info = None
 
     def __enter__(self) -> 'Memory':
         global _memories
@@ -79,6 +80,15 @@ class Memory:
             step_data[k] = v
         self.step_metrics.append(step_data)
 
+    def set_info(self,
+                 data: dict
+                ) -> None:
+        """Set the info data."""
+        if self.info is None:
+            self.info = {}
+        for k, v in data.items():
+            self.info[k] = v
+
     def flush(self) -> None:
         """Flush run data."""
         if self.repo is not None:
@@ -86,7 +96,8 @@ class Memory:
                 id=self.run_id,
                 params=self.params,
                 metrics=self.metrics,
-                step_metrics=self.step_metrics
+                step_metrics=self.step_metrics,
+                info=self.info,
             )
             self.repo.save_run(run)
 
@@ -108,3 +119,9 @@ def set_metrics(data: dict,
     """Write metrics to the current memory."""
     mem = get_current_memory()
     mem.set_metrics(data, step=step)
+
+
+def set_info(data: dict) -> None:
+    """Write info to the current memory."""
+    mem = get_current_memory()
+    mem.set_info(data)

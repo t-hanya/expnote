@@ -4,6 +4,7 @@ from expnote.recording.memory import merge_dicts
 from expnote.recording.memory import Memory
 from expnote.recording.memory import set_params
 from expnote.recording.memory import set_metrics
+from expnote.recording.memory import set_info
 
 
 @pytest.mark.parametrize('dict1, dict2, expected', [
@@ -54,6 +55,10 @@ class TestMemory:
             for i in range(3, 5):
                 set_metrics({'loss': 5 - i}, step=(i, 'epoch'))
 
+            # info
+            mem.set_info({'status': 'complete'})
+            set_info({'start_time': '2022-10-09 12:00:00.000000'})
+
             # save
             mem.flush()
 
@@ -77,3 +82,7 @@ class TestMemory:
             {'epoch': 3, 'loss': 2},
             {'epoch': 4, 'loss': 1},
         ]
+        assert run.info == {
+            'status': 'complete',
+            'start_time': '2022-10-09 12:00:00.000000'
+        }

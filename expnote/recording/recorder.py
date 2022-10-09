@@ -3,6 +3,7 @@ A helper class to record run data.
 """
 
 
+from contextlib import ExitStack
 from functools import wraps
 from typing import Optional
 from typing import Tuple
@@ -13,6 +14,7 @@ from expnote.repository import Repository
 from expnote.recording.memory import Memory
 from expnote.recording.memory import set_params
 from expnote.recording.memory import set_metrics
+from expnote.recording.collectors import RunInfoCollector
 
 
 class Recorder:
@@ -36,8 +38,12 @@ class Recorder:
                 repo=self.repo,
             )
             with memory:
-                # execute the function
-                ret = func(*args, **kwargs)
+                with ExitStack() as stack:
+                    stack.enter_context(RunInfoCollector())
+                    memory.flush()
+
+                    # execute the function
+                    ret = func(*args, **kwargs)
 
             memory.flush()
 

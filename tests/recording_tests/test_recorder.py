@@ -13,7 +13,7 @@ class Repository:
         return list(self.runs.values())
 
 
-class TestRecord:
+class TestRecorder:
     def test(self):
 
         repo = Repository()
@@ -44,3 +44,7 @@ class TestRecord:
             {'epoch': 3, 'loss': 2},
             {'epoch': 4, 'loss': 1}
         ]
+        assert 'start_time' in run.info
+        assert 'end_time' in run.info
+        assert run.info['status'] == 'complete'
+

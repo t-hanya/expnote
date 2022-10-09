@@ -14,6 +14,7 @@ from expnote.repository import Repository
 from expnote.recording.memory import Memory
 from expnote.recording.memory import set_params
 from expnote.recording.memory import set_metrics
+from expnote.recording.memory import set_info
 from expnote.recording.collectors import RunInfoCollector
 
 
@@ -59,3 +60,6 @@ class Recorder:
                 step: Optional[Tuple[int, str]] = None
                ) -> None:
         set_metrics(data, step=step)
+
+    def info(self, data: dict) -> None:
+        set_info(data)

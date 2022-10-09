@@ -28,6 +28,7 @@ class TestRecorder:
             recorder.metrics({'acc': 0.9})
             for i in range(5):
                 recorder.metrics({'loss': 5 - i}, step=(i, 'epoch'))
+            recorder.info({'tag': 'train'})
 
         main()
 
@@ -47,4 +48,4 @@ class TestRecorder:
         assert 'start_time' in run.info
         assert 'end_time' in run.info
         assert run.info['status'] == 'complete'
-
+        assert run.info['tag'] == 'train'

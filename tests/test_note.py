@@ -2,9 +2,10 @@ from PIL import Image
 
 from expnote.note import Table
 from expnote.note import Figure
+from expnote.note import Note
 
 
-class TestNote:
+class TestTable:
 
     def test(self):
         table = Table(
@@ -20,6 +21,19 @@ class TestNote:
 
         assert len(str(table).splitlines()) == 5
 
+    def test_note(self):
+        table = Table(
+            columns=['a', 'b', 'c'],
+            rows=[[1, 10, 100],
+                  [2, 20, 200],
+                  [3, 30, 300]]
+        )
+        table.note = "note"
+        table.title = "title"
+
+        assert "note" in str(table)
+        assert "title" in str(table)
+
 
 class TestFigure:
 
@@ -28,3 +42,25 @@ class TestFigure:
             image=Image.new('RGB', (100, 50))
         )
         assert fig.image.size == (100, 50)
+
+    def test_note(self):
+        fig = Figure(
+            image=Image.new('RGB', (100, 50))
+        )
+        fig.alt = "alt text"
+        fig.note = "note"
+        fig.title = "title"
+
+        assert "alt text" in str(fig)
+        assert "note" in str(fig)
+        assert "title" in str(fig)
+
+
+class TestNote:
+    def test(self):
+        note = Note(
+            title='title',
+            note='note'
+        )
+        assert 'title' in str(note)
+        assert 'note' in str(note)

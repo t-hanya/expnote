@@ -101,3 +101,8 @@ class TestFileStorage:
         assert set(obj_paths) == {prefix + 'aaa1',
                                   prefix + 'aaa2',
                                   prefix + 'aaa3'}
+
+    def test_file_lock(self, work_dir):
+        storage = FileStorage.initialize()
+        with storage.lock('lock1'):
+            pass

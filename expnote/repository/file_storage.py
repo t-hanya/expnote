@@ -3,10 +3,13 @@ Local file storage.
 """
 
 
+from contextlib import contextmanager
 from typing import Optional
 from typing import List
 from typing import Union
 from pathlib import Path
+
+import filelock
 
 
 DIR_NAME = '.expnote'
@@ -123,3 +126,13 @@ class FileStorage:
 
         obj_paths = [str(p.relative_to(self.root)) for p in found]
         return obj_paths
+
+    @contextmanager
+    def lock(self, obj_path: str) -> filelock.AcquireReturnProxy:
+        """Aqruire file lock."""
+        file_path = self._obj_path_to_file_path(obj_path)
+        parent_dir = file_path.parent
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        lock_path = parent_dir / (file_path.name + '.lock')
+        with filelock.FileLock(str(lock_path)) as proxy:
+            yield proxy

@@ -10,6 +10,7 @@ from typing import Union
 from pathlib import Path
 
 import filelock
+from PIL import Image
 
 
 DIR_NAME = '.expnote'
@@ -57,35 +58,47 @@ class FileStorage:
             raise ValueError(msg)
         return self.root / obj_path
 
-    def save(self, data: str, obj_path: str) -> None:
+    def save(self, data: str, obj_path: str, data_type: str = 'text') -> None:
         """Save an object to the storage.
 
         Args:
-            data (str): An object data.
+            data (str or PIL.Image.Image): An object data.
             obj_path (str): An object path for the data.
+            data_type (str, optional) : Data type in ('text', 'image').
         """
         file_path = self._obj_path_to_file_path(obj_path)
         file_path.parent.mkdir(parents=True, exist_ok=True)
-        with file_path.open('w') as f:
-            f.write(data)
+        if data_type == 'text':
+            with file_path.open('w') as f:
+                f.write(data)
+        elif data_type == 'image':
+            data.save(file_path)
+        else:
+            raise ValueError('Unknown data type ({})'.format(data_type))
 
-    def get(self, obj_path: str) -> str:
+    def get(self, obj_path: str, data_type: str = 'text') -> str:
         """Get an object from the storage.
 
         Args:
             obj_path (str): An object path.
+            data_type (str, optional) : Data type in ('text', 'image').
 
         Raises:
             KeyError for non-existent object path.
 
         Returns:
-            str: The object data content.
+            str or PIL.Image.Image: The object data content.
         """
         file_path = self._obj_path_to_file_path(obj_path)
         if not file_path.is_file():
             raise KeyError('Object not found ({})'.format(obj_path))
-        with file_path.open() as f:
-            data = f.read()
+        if data_type == 'text':
+            with file_path.open() as f:
+                data = f.read()
+        elif data_type == 'image':
+            data = Image.open(file_path)
+        else:
+            raise ValueError('Unknown data type ({})'.format(data_type))
         return data
 
     def remove(self, obj_path: str) -> None:

@@ -4,6 +4,7 @@ import shutil
 from tempfile import mkdtemp
 
 import pytest
+from PIL import Image
 
 from expnote.repository.file_storage import FileStorage
 from expnote.repository.file_storage import DIR_NAME
@@ -106,3 +107,11 @@ class TestFileStorage:
         storage = FileStorage.initialize()
         with storage.lock('lock1'):
             pass
+
+    def test_data_type(self, work_dir):
+        storage = FileStorage.initialize()
+        image = Image.new('RGB', (20, 10))
+        storage.save(
+            image, 'figures/image1.png', data_type='image')
+        ret = storage.get('figures/image1.png', data_type='image')
+        assert ret.size == image.size

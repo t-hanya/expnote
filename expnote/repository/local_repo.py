@@ -3,6 +3,7 @@ File based local repository.
 """
 
 
+from contextlib import contextmanager
 import json
 from typing import List
 from typing import Optional
@@ -13,6 +14,7 @@ from expnote.note import Table
 from expnote.note import Figure
 from expnote.note import Note
 from expnote.experiment import Experiment
+from expnote.experiment import Workspace
 from .file_storage import FileStorage
 
 
@@ -188,6 +190,27 @@ class LocalRepository:
             exp_ids = exp_ids[:limit]
         experiments = [self.get_experiment(exp_id) for exp_id in exp_ids]
         return experiments
+
+    @contextmanager
+    def open_workspace(self) -> Workspace:
+        """Open and return the workspace object.
+
+        In the context, workspace data is locked, and the workspace data
+        is saved after exitting the context automatically.
+        """
+        with self._storage.lock('workspaces_default.lock'):
+            try:
+                workspace = Workspace(
+                    **json.loads(self._storage.get('workspaces/default')))
+            except KeyError:
+                workspace = Workspace()
+            yield workspace
+            data = {
+                'untracked_runs': workspace._untracked_runs,
+                'uncommitted_experiments': workspace._uncommitted_experiments,
+                'assigned_runs': workspace._assigned_runs
+            }
+            self._storage.save(json.dumps(data, indent=2), 'workspaces/default')
 
 
 class FileNameAssigner:

@@ -134,6 +134,24 @@ class TestLocalRepository:
         assert len(exps) == 2
         assert [e.title for e in exps] == ['title3', 'title2']
 
+    def test_workspace(self, work_dir):
+        repo = LocalRepository.initialize()
+
+        with repo.open_workspace() as workspace:
+
+            assert len(workspace.untracked_runs) == 0
+            assert len(workspace.uncommitted_experiments) == 0
+            assert workspace.assigned_runs == {}
+
+            workspace.add_untracked_run('run1')
+            workspace.add_uncommitted_experiment('0')
+            workspace.assign_run_to_experiment('run1', '0')
+
+        with repo.open_workspace() as workspace:
+            assert workspace.untracked_runs == []
+            assert workspace.uncommitted_experiments == ['0']
+            assert workspace.assigned_runs == {'0': ['run1']}
+
 
 class TestFileNameAssigner:
 

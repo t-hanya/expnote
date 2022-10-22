@@ -47,11 +47,9 @@ class TestFigure:
         fig = Figure(
             image=Image.new('RGB', (100, 50))
         )
-        fig.alt = "alt text"
         fig.note = "note"
         fig.title = "title"
 
-        assert "alt text" in str(fig)
         assert "note" in str(fig)
         assert "title" in str(fig)
 

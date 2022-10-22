@@ -47,16 +47,11 @@ class Table:
 class Figure:
     """A figure data."""
     image: Image.Image
-    alt: Optional[str] = None
-    file_name: Optional[str] = None
     note: Optional[str] = None
     title: Optional[str] = None
 
     def __str__(self) -> str:
-        content = '<Figure file_name="{}" alt="{}">'.format(
-            self.file_name,
-            self.alt
-        )
+        content = 'Figure(title="{}"'.format(self.title)
         # title & note
         if self.title is not None:
             content = f'## {self.title}\n\n' + content

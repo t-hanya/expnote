@@ -34,14 +34,17 @@ class Recorder:
         @wraps(func)
         def wrapped_func(*args, **kwargs):
 
+            run_id = uuid.uuid4().hex
             memory = Memory(
-                run_id=uuid.uuid4().hex,
+                run_id=run_id,
                 repo=self.repo,
             )
             with memory:
                 with ExitStack() as stack:
                     stack.enter_context(RunInfoCollector())
                     memory.flush()
+                    with self.repo.open_workspace() as ws:
+                        ws.add_untracked_run(run_id)
 
                     # execute the function
                     ret = func(*args, **kwargs)

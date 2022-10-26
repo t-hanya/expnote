@@ -38,6 +38,8 @@ class LocalRepository:
         }
         if run.step_metrics is not None:
             data['step_metrics'] = run.step_metrics
+        if run.info is not None:
+            data['info'] = run.info
         obj_path = 'runs/' + run.id
         self._storage.save(json.dumps(data), obj_path)
 

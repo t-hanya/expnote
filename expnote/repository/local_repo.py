@@ -200,7 +200,7 @@ class LocalRepository:
         In the context, workspace data is locked, and the workspace data
         is saved after exitting the context automatically.
         """
-        with self._storage.lock('workspaces_default.lock'):
+        with self._storage.lock('workspaces_default'):
             try:
                 workspace = Workspace(
                     **json.loads(self._storage.get('workspaces/default')))

@@ -10,4 +10,7 @@ setup(
     url='https://github.com/t-hanya/expnote',
     license='MIT',
     packages=find_packages(include='expnote.*'),
+    entry_points = {
+        'console_scripts': ['xn=expnote.cli.main:main'],
+    }
 )

@@ -41,7 +41,7 @@ class Experiment:
         self.notes.append(content)
 
     def __str__(self) -> str:
-        content = f'# {self.title}'
+        content = f'# {self.title} (id={self.id})'
         if self.purpose is not None:
             content += f'\n\nPurpose: {self.purpose}'
         if self.purpose is not None:

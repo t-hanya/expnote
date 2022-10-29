@@ -38,6 +38,8 @@ class LocalRepository:
         }
         if run.step_metrics is not None:
             data['step_metrics'] = run.step_metrics
+        if run.info is not None:
+            data['info'] = run.info
         obj_path = 'runs/' + run.id
         self._storage.save(json.dumps(data), obj_path)
 
@@ -198,7 +200,7 @@ class LocalRepository:
         In the context, workspace data is locked, and the workspace data
         is saved after exitting the context automatically.
         """
-        with self._storage.lock('workspaces_default.lock'):
+        with self._storage.lock('workspaces_default'):
             try:
                 workspace = Workspace(
                     **json.loads(self._storage.get('workspaces/default')))

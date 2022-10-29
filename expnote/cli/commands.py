@@ -9,9 +9,13 @@ from dataclasses import asdict
 import json
 import os
 import sys
+from typing import Optional
 
+from expnote.run import Run
+from expnote.note import Note
 from expnote.note import Table
 from expnote.experiment import Experiment
+from expnote.experiment import Workspace
 from expnote.repository import Repository
 from expnote.functions import compare_runs
 
@@ -49,6 +53,49 @@ def _get_repo() -> Repository:
     return repo
 
 
+def _get_run(repo: Repository, run_id: str) -> Optional[Run]:
+    """Get run from id."""
+    found = repo.find_runs(run_id)
+    if not found:
+        print('No run record found for the id: {}'.format(run_id))
+        return
+
+    elif len(found) > 1:
+        print('Multiple runs are found for the id: {}'.format(run_id))
+        for i, run in enumerate(found):
+            print('{}: {}'.format(i + 1, run))
+        return
+
+    return found[0]
+
+
+def _get_uncommitted_experiment_id(workspace: Workspace,
+                                   exp_id: Optional[str] = None,
+                                   option: str = '--id',
+                                  ) -> Optional[str]:
+    """Get uncommitted experiment."""
+    # determine target experiment
+    if not workspace.uncommitted_experiments:
+        print('No uncommitted experiment found.')
+        print('Use `new` command to add a new experiment.')
+        return None
+
+    if exp_id is None:
+        if len(workspace.uncommitted_experiments) > 1:
+            print('Multiple uncommitted experiments are found.')
+            print(f'Specify the target experiment via `{option}` option.')
+            return None
+        else:
+            exp_id = workspace.uncommitted_experiments[0]
+
+    elif not exp_id in workspace.uncommitted_experiments:
+        print('No uncommitted experiment with the id ({}) found.'.format(
+            exp_id))
+        return None
+
+    return exp_id
+
+
 class NewCmd:
     """Set a new experiment."""
 
@@ -84,45 +131,19 @@ class AddCmd:
         repo = _get_repo()
         full_run_ids = []
         for run_id in args.run_ids:
-            found = repo.find_runs(run_id)
-            if not found:
-                print('No run record found for the id: {}'.format(run_id))
+            run_or_none = _get_run(repo, run_id)
+            if run_or_none is None:
                 return
-
-            elif len(found) > 1:
-                print('Multiple runs are found for the id: {}'.format(run_id))
-                for i, run in enumerate(found):
-                    print('{}: {}'.format(i + 1, run))
-                return
-            full_run_ids.append(found[0].id)
+            full_run_ids.append(run_or_none.id)
 
         with repo.open_workspace() as workspace:
-
             # determine target experiment
-            if not workspace.uncommitted_experiments:
-                print('No uncommitted experiment found.')
-                print('Use `new` command to add a new experiment.')
-                return
-
-            if args.to is None:
-                if len(workspace.uncommitted_experiments) > 1:
-                    print('Multiple uncommitted experiments are found.')
-                    print('Specify the target experiment via `--to` option.')
-                    return
-                else:
-                    exp_id = workspace.uncommitted_experiments[0]
-            else:
-                if args.to in workspace.uncommitted_experiments:
-                    exp_id = args.to
-                else:
-                    msg = 'No uncommitted experiment with the id: {}'.format(
-                        args.to)
-                    print(msg)
-                    return
-
-            # assign runs to the experiment
-            for run_id in full_run_ids:
-                workspace.assign_run_to_experiment(run_id, exp_id)
+            exp_id = _get_uncommitted_experiment_id(
+                workspace, args.to, option='--to')
+            if exp_id is not None:
+                # assign runs to the experiment
+                for run_id in full_run_ids:
+                    workspace.assign_run_to_experiment(run_id, exp_id)
 
 
 class StatusCmd:
@@ -144,13 +165,18 @@ class StatusCmd:
         experiments = [repo.get_experiment(exp_id)
                        for exp_id in uncommitted_experiment_ids]
         for exp in experiments:
-            print('\n{} (id={}):\n'.format(exp.title, exp.id))
+            print('\n# {} (id={}):\n'.format(exp.title, exp.id))
+            print(f'- purpose: {exp.purpose}')
+            print(f'- conclusion: {exp.conclusion}\n')
             run_ids = assigned_runs[exp.id]
             runs = [repo.get_run(run_id) for run_id in run_ids]
-            print(compare_runs(runs, grouping=False))
+            print(str(compare_runs(runs, grouping=False)) + '\n')
+            notes = [note for note in exp.notes if type(note) == Note]
+            if notes:
+                print(notes[-1].note)
 
         if untracked_runs:
-            print('\nUntracked runs:\n')
+            print('\n# Untracked runs:\n')
             print(compare_runs(untracked_runs, grouping=False))
         print('')
 
@@ -177,16 +203,10 @@ class RmCmd:
         repo = _get_repo()
         full_run_ids = []
         for run_id in args.run_ids:
-            found = repo.find_runs(run_id)
-            if not found:
-                print('No run record found for the id: {}'.format(run_id))
+            run_or_none = _get_run(repo, run_id)
+            if run_or_none is None:
                 return
-            elif len(found) > 1:
-                print('Multiple runs are found for the id: {}'.format(run_id))
-                for i, run in enumerate(found):
-                    print('{}: {}'.format(i + 1, run))
-                return
-            full_run_ids.append(found[0].id)
+            full_run_ids.append(run_or_none.id)
 
         with repo.open_workspace() as workspace:
             for run_id in full_run_ids:
@@ -204,15 +224,9 @@ class ShowCmd:
 
     def __call__(self, args: Namespace) -> None:
         repo = _get_repo()
-        found = repo.find_runs(args.run_id)
-        if not found:
-            print('No run record found for the id: {}'.format(args.run_id))
-        elif len(found) > 1:
-            print('Multiple runs are found for the id: {}'.format(args.run_id))
-            for i, run in enumerate(found):
-                print('{}: {}'.format(i + 1, run))
-        else:
-            print(json.dumps(asdict(found[0]), indent=2))
+        run_or_none = _get_run(repo, args.run_id)
+        if run_or_none is not None:
+            print(json.dumps(asdict(run_or_none), indent=2))
 
 
 
@@ -231,27 +245,11 @@ class CommitCmd:
 
         repo = _get_repo()
         with repo.open_workspace() as workspace:
-
             # determine target experiment
-            if not workspace.uncommitted_experiments:
-                print('No uncommitted experiment found.')
-                print('Use `new` command to add a new experiment.')
+            exp_id = _get_uncommitted_experiment_id(
+                workspace, args.id, option='--id')
+            if exp_id is None:
                 return
-
-            if args.id is None:
-                if len(workspace.uncommitted_experiments) > 1:
-                    print('Multiple uncommitted experiments are found.')
-                    print('Specify the target experiment via `--id` option.')
-                    return
-                else:
-                    exp_id = workspace.uncommitted_experiments[0]
-            else:
-                if args.to in workspace.uncommitted_experiments:
-                    exp_id = args.to
-                else:
-                    msg = 'No uncommitted experiment with the id: {}'.format(
-                        args.to)
-                    return
 
             # commit operation
             exp = repo.get_experiment(exp_id)
@@ -296,3 +294,44 @@ class LogCmd:
             experiments = experiments[:limit]
 
         print('\n\n'.join([str(e) for e in experiments]))
+
+
+class EditCmd:
+    """Edit an experiment data."""
+
+    def __init__(self, parser: ArgumentParser) -> None:
+        parser.add_argument('--id', type=str, default=None,
+                            help='Target experiment ID to be editted.')
+        parser.add_argument('--title', type=str, default=None,
+                            help='Set a title of the experiment.')
+        parser.add_argument('--purpose', type=str, default=None,
+                            help='Set a purpose of the experiment.')
+        parser.add_argument('--conclusion', type=str, default=None,
+                            help='Set a conclusion of the experiment.')
+
+    def __call__(self, args: Namespace) -> None:
+        repo = _get_repo()
+        if args.id is None:
+            with repo.open_workspace() as workspace:
+                exp_id = _get_uncommitted_experiment_id(
+                    workspace, option='--id')
+                if exp_id is None:
+                    return
+        else:
+            exp_id = args.id
+        try:
+            exp = repo.get_experiment(exp_id)
+        except KeyError:
+            print('No experiment with the id ({}) found'.format(exp_id))
+            return
+
+        if args.title is not None:
+            exp.title = args.title
+
+        if args.purpose is not None:
+            exp.purpose = args.purpose
+
+        if args.conclusion is not None:
+            exp.conclusion = args.purpose
+
+        repo.save_experiment(exp)

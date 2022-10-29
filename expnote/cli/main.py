@@ -19,6 +19,7 @@ from expnote.cli.commands import RmCmd
 from expnote.cli.commands import ShowCmd
 from expnote.cli.commands import CommitCmd
 from expnote.cli.commands import LogCmd
+from expnote.cli.commands import EditCmd
 
 
 COMMANDS = [
@@ -31,6 +32,7 @@ COMMANDS = [
     ('show', ShowCmd),
     ('commit', CommitCmd),
     ('log', LogCmd),
+    ('edit', EditCmd),
 ]
 
 

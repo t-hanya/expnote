@@ -19,6 +19,7 @@ from expnote.cli.commands import RmCmd
 from expnote.cli.commands import ShowCmd
 from expnote.cli.commands import CommitCmd
 from expnote.cli.commands import LogCmd
+from expnote.cli.commands import EditCmd
 
 
 @pytest.fixture
@@ -208,3 +209,15 @@ class TestLogCmd:
         parser = ArgumentParser()
         cmd = LogCmd(parser)
         cmd(parser.parse_args([]))
+
+
+class TestEditCmd:
+
+    def test(self, sample_repo):
+        parser = ArgumentParser()
+        cmd = EditCmd(parser)
+        cmd(parser.parse_args(['--title', 'new title',
+                               '--purpose', 'new purpose']))
+        exp = sample_repo.get_experiment('0')
+        assert exp.title == 'new title'
+        assert exp.purpose == 'new purpose'

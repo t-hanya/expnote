@@ -1,22 +1,32 @@
+import os
+from pathlib import Path
+import shutil
+from tempfile import mkdtemp
+
+import pytest
+
+from expnote.repository import Repository
 from expnote.recording import Recorder
 
 
-class Repository:
+@pytest.fixture
+def work_dir() -> Path:
+    org_dir = os.getcwd()
+    try:
+        tmp_dir = mkdtemp()
+        tmp_dir_path = Path(tmp_dir).resolve()
+        os.chdir(tmp_dir_path)
+        yield tmp_dir_path
 
-    def __init__(self):
-        self.runs = {}
-
-    def save_run(self, run):
-        self.runs[run.id] = run
-
-    def find_runs(self):
-        return list(self.runs.values())
+    finally:
+        os.chdir(org_dir)
+        shutil.rmtree(tmp_dir)
 
 
 class TestRecorder:
-    def test(self):
+    def test(self, work_dir):
 
-        repo = Repository()
+        repo = Repository.initialize()
 
         recorder = Recorder(
             repo=repo
@@ -32,7 +42,7 @@ class TestRecorder:
 
         main()
 
-        runs = repo.find_runs()
+        runs = repo.find_runs('')
         assert len(runs) == 1
 
         run = runs[0]

@@ -14,7 +14,7 @@ pip install git+https://github.com/t-hanya/expnote.git
 
 ## Experiment Management
 
-**1. Initialize a expnote repository**
+**1. Initialize an expnote repository**
 
 ```shell
 xn init

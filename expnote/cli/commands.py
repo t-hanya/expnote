@@ -332,6 +332,6 @@ class EditCmd:
             exp.purpose = args.purpose
 
         if args.conclusion is not None:
-            exp.conclusion = args.purpose
+            exp.conclusion = args.conclusion
 
         repo.save_experiment(exp)

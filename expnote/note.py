@@ -19,10 +19,18 @@ from PIL import Image
 TableValue = Union[None, int, float, str, bool, Image.Image]
 
 
+TEXT_COLORS = {
+    'red': {'code': '\33[31m', 'hex': '#F05555'},
+    'green': {'code': '\33[32m', 'hex': '#00A24D'},
+    'yellow': {'code': '\33[33m', 'hex': '#E2B914'},
+}
+CODE_END = '\33[0m'
+
+
 @dataclass
 class TableCellStyle:
     """Table cell style data."""
-    text_color: Optional[Literal['red', 'green']] = None
+    text_color: Optional[Literal['red', 'green', 'yellow']] = None
 
 
 @dataclass
@@ -132,7 +140,8 @@ class Table:
             for data in row_data:
                 styles = []
                 if data.style.text_color is not None:
-                    styles.append('color:{}'.format(data.style.text_color))
+                    styles.append('color:{}'.format(
+                        TEXT_COLORS[data.style.text_color]['hex']))
                 if styles:
                     style = ' style="{}"'.format(';'.join(styles))
                 else:
@@ -147,9 +156,6 @@ class Table:
         return html
 
     def _to_markdown_table(self, pretty: bool = False) -> str:
-        code_color = {'red': '\33[31m', 'green': '\33[32m'}
-        code_end = '\33[0m'
-
         rows = []
         styles = []
         for row_data in self._data:
@@ -177,7 +183,7 @@ class Table:
             for value, style, width in zip(row, row_style, width_arr):
                 text = value.ljust(width)
                 if pretty and style.text_color is not None:
-                    text = code_color[style.text_color] + text + code_end
+                    text = TEXT_COLORS[style.text_color]['code'] + text + CODE_END
                 line_elems.append(text)
             lines.append('| ' + ' | '.join([text for text in line_elems]) + ' |')
         content = '\n'.join(lines)

@@ -1,4 +1,5 @@
 from PIL import Image
+import pytest
 
 from expnote.note import Table
 from expnote.note import Figure
@@ -137,6 +138,21 @@ class TestFigure:
         assert "note" in str(fig)
         assert "title" in str(fig)
 
+    @pytest.mark.parametrize('repr_method_name', ['_repr_html_',
+                                                  '_repr_pretty_',
+                                                  '_repr_markdown_'])
+    def test_repr_html(self, repr_method_name):
+        fig = Figure(
+            image=Image.new('RGB', (100, 50))
+        )
+        fig.note = "note"
+        fig.title = "title"
+
+        # repr_ = fig._repr_xxx_()
+        repr_ = getattr(fig, repr_method_name)()
+        assert 'note' in repr_
+        assert 'title' in repr_
+
 
 class TestNote:
     def test(self):
@@ -146,3 +162,16 @@ class TestNote:
         )
         assert 'title' in str(note)
         assert 'note' in str(note)
+
+    @pytest.mark.parametrize('repr_method_name', ['_repr_html_',
+                                                  '_repr_pretty_',
+                                                  '_repr_markdown_'])
+    def test_repr_html(self, repr_method_name):
+        note = Note(
+            title='title',
+            note='note'
+        )
+        # repr_ = note._repr_xxx_()
+        repr_ = getattr(note, repr_method_name)()
+        assert 'note' in repr_
+        assert 'title' in repr_

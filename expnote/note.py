@@ -153,6 +153,11 @@ class Table:
                 html += '<td{}>{}</td>'.format(style, value)
             html += '</tr>\n'
         html += '</table>'
+        if self.title is not None:
+            html = f'<h2>{self.title}</h2>'.format(
+                self.title) + html
+        if self.note is not None:
+            html += f'<p>{self.note}</p>'
         return html
 
     def _to_markdown_table(self, pretty: bool = False) -> str:
@@ -208,6 +213,7 @@ class Table:
 def _to_html_img(image: Image.Image,
                  max_width: int = 150,
                  max_height: int = 100) -> str:
+    """Convert the image instance to a HTML img element."""
     if (image.height / image.width) > (max_height / max_width):
         if image.height > max_height:
             width = int(round(image.width * max_height / image.height))
@@ -232,14 +238,29 @@ class Figure:
     note: Optional[str] = None
     title: Optional[str] = None
 
-    def __str__(self) -> str:
-        content = 'Figure(title="{}"'.format(self.title)
-        # title & note
+    def _repr_markdown_(self) -> str:
+        content = '(figure)'
         if self.title is not None:
             content = f'## {self.title}\n\n' + content
         if self.note is not None:
             content = content + '\n\n' + self.note
         return content
+
+    def _repr_pretty_(self, *args) -> str:
+        return self._repr_markdown_()
+
+    def _repr_html_(self) -> str:
+        content = _to_html_img(
+            self.image, max_width=1000, max_height=1000)
+        if self.title is not None:
+            content = f'<h2>{self.title}</h2>'.format(
+                self.title) + content
+        if self.note is not None:
+            content += f'<p>{self.note}</p>'
+        return content
+
+    def __str__(self) -> str:
+        return self._repr_markdown_()
 
 
 @dataclass
@@ -248,8 +269,21 @@ class Note:
     note: str
     title: Optional[str] = None
 
-    def __str__(self) -> str:
+    def _repr_markdown_(self) -> str:
         content = self.note
         if self.title is not None:
             content = f'## {self.title}\n\n' + content
         return content
+
+    def _repr_pretty_(self, *args) -> str:
+        return self._repr_markdown_()
+
+    def _repr_html_(self) -> str:
+        content = f'<p>{self.note}</p>'
+        if self.title is not None:
+            content = f'<h2>{self.title}</h2>'.format(
+                self.title) + content
+        return content
+
+    def __str__(self) -> str:
+        return self._repr_markdown_()
